@@ -1,18 +1,12 @@
 import { Fragment, useState } from 'react'
 import { getOrder } from '../api/orders'
 import type { Order } from '../api/orders'
+import { StatusPill } from './StatusPill'
 import { TrackingPanel } from './TrackingPanel'
 
 type OrderListProps = {
   orders: Order[]
   onOrderChanged: () => void
-}
-
-const statusColors: Record<Order['status'], string> = {
-  CREATED: 'bg-blue-100 text-blue-800',
-  IN_TRANSIT: 'bg-amber-100 text-amber-800',
-  DELIVERED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-gray-200 text-gray-700',
 }
 
 export function OrderList({ orders, onOrderChanged }: OrderListProps) {
@@ -43,55 +37,76 @@ export function OrderList({ orders, onOrderChanged }: OrderListProps) {
   }
 
   if (orders.length === 0) {
-    return <p className="text-gray-500">No orders yet.</p>
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
+        Nenhum pedido ainda.
+      </div>
+    )
   }
 
   return (
-    <table className="w-full border-collapse text-left text-sm">
-      <thead>
-        <tr className="border-b border-gray-200 text-gray-500">
-          <th className="py-2">Tracking code</th>
-          <th className="py-2">Sender</th>
-          <th className="py-2">Recipient</th>
-          <th className="py-2">Status</th>
-          <th className="py-2">Created at</th>
-        </tr>
-      </thead>
-      <tbody>
-        {orders.map((order) => (
-          <Fragment key={order.id}>
-            <tr
-              onClick={() => toggleExpand(order.id)}
-              className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-            >
-              <td className="py-2 font-mono">{order.trackingCode}</td>
-              <td className="py-2">{order.sender.name}</td>
-              <td className="py-2">{order.recipient.name}</td>
-              <td className="py-2">
-                <span className={`rounded px-2 py-1 text-xs font-medium ${statusColors[order.status]}`}>
-                  {order.status}
-                </span>
-              </td>
-              <td className="py-2">{new Date(order.createdAt).toLocaleString()}</td>
-            </tr>
-            {expandedId === order.id && (
-              <tr>
-                <td colSpan={5} className="p-0">
-                  {loadingDetail ? (
-                    <p className="p-4 text-gray-500">Carregando rastreio...</p>
-                  ) : (
-                    <TrackingPanel
-                      orderId={order.id}
-                      tracking={detail?.tracking ?? null}
-                      onEventAdded={handleEventAdded}
-                    />
-                  )}
-                </td>
-              </tr>
-            )}
-          </Fragment>
-        ))}
-      </tbody>
-    </table>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table className="w-full border-collapse text-left text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            <th className="px-4 py-3 font-semibold">Código</th>
+            <th className="px-4 py-3 font-semibold">Remetente</th>
+            <th className="px-4 py-3 font-semibold">Destinatário</th>
+            <th className="px-4 py-3 font-semibold">Status</th>
+            <th className="px-4 py-3 font-semibold">Criado em</th>
+            <th className="w-8 px-4 py-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((order) => {
+            const isExpanded = expandedId === order.id
+            return (
+              <Fragment key={order.id}>
+                <tr
+                  onClick={() => toggleExpand(order.id)}
+                  className={`cursor-pointer border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 ${isExpanded ? 'bg-slate-50' : ''}`}
+                >
+                  <td className="px-4 py-3 font-mono text-xs text-slate-600 tabular-nums">
+                    {order.trackingCode}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{order.sender.name}</td>
+                  <td className="px-4 py-3 text-slate-700">{order.recipient.name}</td>
+                  <td className="px-4 py-3">
+                    <StatusPill status={order.status} />
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 tabular-nums">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3 text-right text-slate-300">
+                    <span
+                      className={`inline-block transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    >
+                      ›
+                    </span>
+                  </td>
+                </tr>
+                {isExpanded && (
+                  <tr>
+                    <td colSpan={6} className="p-0">
+                      {loadingDetail ? (
+                        <p className="bg-slate-50/60 p-4 text-sm text-slate-400">
+                          Carregando rastreio...
+                        </p>
+                      ) : (
+                        <TrackingPanel
+                          orderId={order.id}
+                          tracking={detail?.tracking ?? null}
+                          onEventAdded={handleEventAdded}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
