@@ -14,6 +14,7 @@ export default defineConfig({
         './App': './src/App.tsx',
       },
       shared: ['react', 'react-dom'],
+      bundleAllCSS: true,
     }),
   ],
   server: {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import './index.css'
 import { createOrder, listOrders, type CreateOrderInput, type Order } from './api/orders'
 import { OrderForm } from './components/OrderForm'
 import { OrderList } from './components/OrderList'
