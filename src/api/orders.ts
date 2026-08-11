@@ -7,6 +7,35 @@ export type Party = {
 
 export type OrderStatus = 'CREATED' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED'
 
+export type TrackingStatus =
+  | 'AWAITING_PICKUP'
+  | 'PICKED_UP'
+  | 'IN_TRANSIT'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'FAILED_ATTEMPT'
+
+export type Position = {
+  lat: number
+  lng: number
+}
+
+export type TrackingEvent = {
+  status: TrackingStatus
+  position: Position | null
+  timestamp: string
+  note: string | null
+}
+
+export type Tracking = {
+  id: string
+  orderId: string
+  status: TrackingStatus
+  position: Position | null
+  history: TrackingEvent[]
+  createdAt: string
+}
+
 export type Order = {
   id: string
   trackingCode: string
@@ -15,6 +44,7 @@ export type Order = {
   status: OrderStatus
   createdAt: string
   updatedAt: string
+  tracking?: Tracking | null
 }
 
 export type OrderPage = {
@@ -27,12 +57,28 @@ export type CreateOrderInput = {
   recipient: Party
 }
 
-export async function listOrders(): Promise<OrderPage> {
-  const response = await fetch(`${API_BASE_URL}/orders`)
+export type AddTrackingEventInput = {
+  status: TrackingStatus
+  timestamp: string
+  note?: string
+}
+
+async function parseOrThrow<T>(response: Response, failureMessage: string): Promise<T> {
   if (!response.ok) {
-    throw new Error(`Failed to list orders: ${response.status}`)
+    const body = await response.json().catch(() => null)
+    throw new Error(body?.message ?? `${failureMessage}: ${response.status}`)
   }
   return response.json()
+}
+
+export async function listOrders(): Promise<OrderPage> {
+  const response = await fetch(`${API_BASE_URL}/orders`)
+  return parseOrThrow(response, 'Failed to list orders')
+}
+
+export async function getOrder(id: string): Promise<Order> {
+  const response = await fetch(`${API_BASE_URL}/orders/${id}`)
+  return parseOrThrow(response, 'Failed to load order')
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
@@ -41,9 +87,14 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
-  if (!response.ok) {
-    const body = await response.json().catch(() => null)
-    throw new Error(body?.message ?? `Failed to create order: ${response.status}`)
-  }
-  return response.json()
+  return parseOrThrow(response, 'Failed to create order')
+}
+
+export async function addTrackingEvent(orderId: string, input: AddTrackingEventInput): Promise<Tracking> {
+  const response = await fetch(`${API_BASE_URL}/orders/${orderId}/tracking-events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return parseOrThrow(response, 'Failed to add tracking event')
 }

@@ -1,7 +1,11 @@
+import { Fragment, useState } from 'react'
+import { getOrder } from '../api/orders'
 import type { Order } from '../api/orders'
+import { TrackingPanel } from './TrackingPanel'
 
 type OrderListProps = {
   orders: Order[]
+  onOrderChanged: () => void
 }
 
 const statusColors: Record<Order['status'], string> = {
@@ -11,7 +15,33 @@ const statusColors: Record<Order['status'], string> = {
   CANCELLED: 'bg-gray-200 text-gray-700',
 }
 
-export function OrderList({ orders }: OrderListProps) {
+export function OrderList({ orders, onOrderChanged }: OrderListProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [detail, setDetail] = useState<Order | null>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+
+  async function toggleExpand(orderId: string) {
+    if (expandedId === orderId) {
+      setExpandedId(null)
+      setDetail(null)
+      return
+    }
+    setExpandedId(orderId)
+    setDetail(null)
+    setLoadingDetail(true)
+    try {
+      setDetail(await getOrder(orderId))
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
+
+  async function handleEventAdded() {
+    if (!expandedId) return
+    setDetail(await getOrder(expandedId))
+    onOrderChanged()
+  }
+
   if (orders.length === 0) {
     return <p className="text-gray-500">No orders yet.</p>
   }
@@ -29,17 +59,37 @@ export function OrderList({ orders }: OrderListProps) {
       </thead>
       <tbody>
         {orders.map((order) => (
-          <tr key={order.id} className="border-b border-gray-100">
-            <td className="py-2 font-mono">{order.trackingCode}</td>
-            <td className="py-2">{order.sender.name}</td>
-            <td className="py-2">{order.recipient.name}</td>
-            <td className="py-2">
-              <span className={`rounded px-2 py-1 text-xs font-medium ${statusColors[order.status]}`}>
-                {order.status}
-              </span>
-            </td>
-            <td className="py-2">{new Date(order.createdAt).toLocaleString()}</td>
-          </tr>
+          <Fragment key={order.id}>
+            <tr
+              onClick={() => toggleExpand(order.id)}
+              className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+            >
+              <td className="py-2 font-mono">{order.trackingCode}</td>
+              <td className="py-2">{order.sender.name}</td>
+              <td className="py-2">{order.recipient.name}</td>
+              <td className="py-2">
+                <span className={`rounded px-2 py-1 text-xs font-medium ${statusColors[order.status]}`}>
+                  {order.status}
+                </span>
+              </td>
+              <td className="py-2">{new Date(order.createdAt).toLocaleString()}</td>
+            </tr>
+            {expandedId === order.id && (
+              <tr>
+                <td colSpan={5} className="p-0">
+                  {loadingDetail ? (
+                    <p className="p-4 text-gray-500">Carregando rastreio...</p>
+                  ) : (
+                    <TrackingPanel
+                      orderId={order.id}
+                      tracking={detail?.tracking ?? null}
+                      onEventAdded={handleEventAdded}
+                    />
+                  )}
+                </td>
+              </tr>
+            )}
+          </Fragment>
         ))}
       </tbody>
     </table>

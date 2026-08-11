@@ -8,8 +8,8 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  async function refreshOrders() {
-    setLoading(true)
+  async function refreshOrders(silent = false) {
+    if (!silent) setLoading(true)
     setLoadError(null)
     try {
       const page = await listOrders()
@@ -17,7 +17,7 @@ function App() {
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Failed to load orders')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -27,7 +27,7 @@ function App() {
 
   async function handleCreate(input: CreateOrderInput) {
     await createOrder(input)
-    await refreshOrders()
+    await refreshOrders(true)
   }
 
   return (
@@ -43,7 +43,9 @@ function App() {
         <h2 className="text-lg font-medium text-gray-900">Orders</h2>
         {loading && <p className="text-gray-500">Loading...</p>}
         {loadError && <p className="text-sm text-red-600">{loadError}</p>}
-        {!loading && !loadError && <OrderList orders={orders} />}
+        {!loading && !loadError && (
+          <OrderList orders={orders} onOrderChanged={() => refreshOrders(true)} />
+        )}
       </section>
     </div>
   )
