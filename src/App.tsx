@@ -3,6 +3,7 @@ import './index.css'
 import { createOrder, listOrders, type CreateOrderInput, type Order } from './api/orders'
 import { OrderForm } from './components/OrderForm'
 import { OrderList } from './components/OrderList'
+import { RoutePlanner } from './components/RoutePlanner'
 
 function App() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -66,6 +67,13 @@ function App() {
           {!loading && !loadError && (
             <OrderList orders={orders} onOrderChanged={() => refreshOrders(true)} />
           )}
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold tracking-wide text-slate-500 uppercase">
+            Planejar rota
+          </h2>
+          {!loading && !loadError && <RoutePlanner orders={orders} />}
         </section>
       </div>
     </div>
