@@ -6,24 +6,27 @@ type OrderFormProps = {
 }
 
 const emptyForm: CreateOrderInput = {
-  sender: { name: '', address: '' },
-  recipient: { name: '', address: '' },
+  sender: { name: '', address: '', email: '' },
+  recipient: { name: '', address: '', email: '' },
 }
 
 function Field({
   label,
   value,
   onChange,
+  type = 'text',
 }: {
   label: string
   value: string
   onChange: (value: string) => void
+  type?: string
 }) {
   return (
     <label className="block space-y-1">
       <span className="text-xs font-medium text-slate-500">{label}</span>
       <input
         required
+        type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
@@ -69,6 +72,12 @@ export function OrderForm({ onSubmit }: OrderFormProps) {
             value={form.sender.address}
             onChange={(v) => setForm({ ...form, sender: { ...form.sender, address: v } })}
           />
+          <Field
+            label="E-mail"
+            type="email"
+            value={form.sender.email}
+            onChange={(v) => setForm({ ...form, sender: { ...form.sender, email: v } })}
+          />
         </fieldset>
 
         <fieldset className="space-y-3 sm:border-l sm:border-slate-100 sm:pl-6">
@@ -82,6 +91,12 @@ export function OrderForm({ onSubmit }: OrderFormProps) {
             label="Endereço"
             value={form.recipient.address}
             onChange={(v) => setForm({ ...form, recipient: { ...form.recipient, address: v } })}
+          />
+          <Field
+            label="E-mail"
+            type="email"
+            value={form.recipient.email}
+            onChange={(v) => setForm({ ...form, recipient: { ...form.recipient, email: v } })}
           />
         </fieldset>
       </div>

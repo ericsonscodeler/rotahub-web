@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { getOrder } from '../api/orders'
 import type { Order } from '../api/orders'
+import { NotificationsPanel } from './NotificationsPanel'
 import { StatusPill } from './StatusPill'
 import { TrackingPanel } from './TrackingPanel'
 
@@ -93,11 +94,17 @@ export function OrderList({ orders, onOrderChanged }: OrderListProps) {
                           Carregando rastreio...
                         </p>
                       ) : (
-                        <TrackingPanel
-                          orderId={order.id}
-                          tracking={detail?.tracking ?? null}
-                          onEventAdded={handleEventAdded}
-                        />
+                        <>
+                          <TrackingPanel
+                            orderId={order.id}
+                            tracking={detail?.tracking ?? null}
+                            onEventAdded={handleEventAdded}
+                          />
+                          <NotificationsPanel
+                            orderId={order.id}
+                            refreshKey={detail?.tracking?.history.length}
+                          />
+                        </>
                       )}
                     </td>
                   </tr>
